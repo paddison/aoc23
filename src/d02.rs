@@ -7,7 +7,6 @@ static INP: &str = include_str!("../data/d02");
 type Game = Vec<Draw>;
 type Draw = [usize; 3];
 
-
 #[derive(Debug)]
 enum Color {
     R,
