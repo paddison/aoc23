@@ -69,7 +69,7 @@ fn parse_input(inp: &str) -> Vec<Game> {
     games
 }
 
-fn to_many(game: &Game, max: &Draw) -> bool {
+fn too_many(game: &Game, max: &Draw) -> bool {
     type C = Color;
 
     game.iter()
@@ -81,7 +81,7 @@ pub(crate) fn get_solution_1() -> usize {
     parse_input(INP)
         .into_iter()
         .enumerate()
-        .filter(|(_, g)| !to_many(&g, &max))
+        .filter(|(_, g)| !too_many(g, &max))
         .map(|(i, _)| i + 1)
         .sum()
 }
