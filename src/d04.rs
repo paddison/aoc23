@@ -36,13 +36,15 @@ pub(crate) fn get_solution_1() -> usize {
 pub(crate) fn get_solution_2() -> usize {
     let cards = parse_input(INPUT);
     let mut copies = vec![1; cards.len()];
-    cards.into_iter()
+    cards
+        .into_iter()
         .map(|(act, win)| act.intersection(&win).count())
         .enumerate()
         .map(|(i, n)| {
-            for j in i + 1..i + n + 1 { 
-                copies[j] += copies[i]; 
+            for j in i + 1..i + n + 1 {
+                copies[j] += copies[i];
             }
             copies[i]
-        }).sum()
+        })
+        .sum()
 }
