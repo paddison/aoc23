@@ -1,5 +1,6 @@
 use std::{cmp::Ordering, fmt::Display};
 
+#[allow(dead_code)]
 static TEST: &str = include_str!("../data/d07t");
 static INPUT: &str = include_str!("../data/d07");
 
@@ -14,11 +15,7 @@ fn parse_input(input: &str) -> Vec<(Hand, usize)> {
 }
 
 fn determine_total_winnings(mut bids: Vec<(Hand, usize)>) -> usize {
-    bids.sort_by(|(lhs, _), (rhs, _)| lhs.partial_cmp(rhs).unwrap());
-
-    for (card, _) in &bids {
-        //println!("{card}");
-    }
+    bids.sort_by(|(lhs, _), (rhs, _)| lhs.compare(rhs));
 
     bids.into_iter()
         .enumerate()
@@ -31,21 +28,43 @@ pub(crate) fn get_solution_1() -> usize {
     determine_total_winnings(bids)
 }
 
+pub(crate) fn get_solution_2() -> usize {
+    let mut bids = parse_input(INPUT);
+    for (hand, _) in &mut bids {
+        hand.p2 = true;
+    }
+    determine_total_winnings(bids)
+}
+
 #[derive(Debug, Eq, PartialEq, Ord, PartialOrd, Clone, Copy)]
 enum Card {
-    TWO = 0,
-    THREE = 1,
-    FOUR = 2,
-    FIVE = 3,
-    SIX = 4,
-    SEVEN = 5,
-    EIGHT = 6,
-    NINE = 7,
-    T = 8,
-    J = 9,
-    Q = 10,
-    K = 11,
-    A = 12,
+    Two = 2,
+    Three = 3,
+    Four = 4,
+    Five = 5,
+    Six = 6,
+    Seven = 7,
+    Eight = 8,
+    Nine = 9,
+    T = 10,
+    J = 1,
+    Q = 12,
+    K = 13,
+    A = 14,
+}
+
+impl Card {
+    fn value(&self, is_joker: bool) -> usize {
+        if self == &Card::J {
+            if is_joker {
+                1
+            } else {
+                11
+            }
+        } else {
+            *self as usize
+        }
+    }
 }
 
 impl Display for Card {
@@ -57,21 +76,21 @@ impl Display for Card {
 
 impl Default for Card {
     fn default() -> Self {
-        Self::TWO
+        Self::Two
     }
 }
 
 impl From<char> for Card {
     fn from(input: char) -> Self {
         match input {
-            '2' => Self::TWO,
-            '3' => Self::THREE,
-            '4' => Self::FOUR,
-            '5' => Self::FIVE,
-            '6' => Self::SIX,
-            '7' => Self::SEVEN,
-            '8' => Self::EIGHT,
-            '9' => Self::NINE,
+            '2' => Self::Two,
+            '3' => Self::Three,
+            '4' => Self::Four,
+            '5' => Self::Five,
+            '6' => Self::Six,
+            '7' => Self::Seven,
+            '8' => Self::Eight,
+            '9' => Self::Nine,
             'T' => Self::T,
             'J' => Self::J,
             'Q' => Self::Q,
@@ -85,14 +104,14 @@ impl From<char> for Card {
 impl From<Card> for char {
     fn from(value: Card) -> Self {
         match value {
-            Card::TWO => '2',
-            Card::THREE => '3',
-            Card::FOUR => '4',
-            Card::FIVE => '5',
-            Card::SIX => '6',
-            Card::SEVEN => '7',
-            Card::EIGHT => '8',
-            Card::NINE => '9',
+            Card::Two => '2',
+            Card::Three => '3',
+            Card::Four => '4',
+            Card::Five => '5',
+            Card::Six => '6',
+            Card::Seven => '7',
+            Card::Eight => '8',
+            Card::Nine => '9',
             Card::T => 'T',
             Card::J => 'J',
             Card::Q => 'Q',
@@ -105,6 +124,7 @@ impl From<Card> for char {
 #[derive(Eq, PartialEq)]
 struct Hand {
     cards: [Card; 5],
+    p2: bool,
 }
 
 impl Display for Hand {
@@ -117,27 +137,6 @@ impl Display for Hand {
     }
 }
 
-impl PartialOrd for Hand {
-    fn partial_cmp(&self, other: &Self) -> Option<Ordering> {
-        let lhs = self.score();
-        let rhs = other.score();
-
-        if lhs > rhs {
-            Some(Ordering::Greater)
-        } else if lhs < rhs {
-            Some(Ordering::Less)
-        } else {
-            Some(self.compare(other))
-        }
-    }
-}
-
-impl Ord for Hand {
-    fn cmp(&self, other: &Self) -> Ordering {
-        self.partial_cmp(other).unwrap()
-    }
-}
-
 impl From<&str> for Hand {
     fn from(input: &str) -> Self {
         let mut cards = [Card::default(); 5];
@@ -145,13 +144,43 @@ impl From<&str> for Hand {
             .chars()
             .enumerate()
             .for_each(|(i, c)| cards[i] = c.into());
-        Self { cards }
+        Self { cards, p2: false }
     }
 }
 
 impl Hand {
+    fn compare(&self, other: &Self) -> Ordering {
+        let lhs = if self.p2 {
+            self.score_joker()
+        } else {
+            self.score()
+        };
+
+        let rhs = if other.p2 {
+            other.score_joker()
+        } else {
+            other.score()
+        };
+
+        match lhs.cmp(&rhs) {
+            Ordering::Equal => self.compare_strongest_card(other),
+            ordering => ordering,
+        }
+    }
+
+    fn compare_strongest_card(&self, other: &Self) -> Ordering {
+        let p2 = self.p2;
+        for (lhs, rhs) in self.cards.iter().zip(other.cards) {
+            match lhs.value(p2).cmp(&rhs.value(p2)) {
+                Ordering::Equal => continue,
+                ordering => return ordering,
+            }
+        }
+        Ordering::Equal
+    }
+
     fn is_five(&self) -> bool {
-        return self.is_n(5, 0).is_some();
+        self.is_n(5, 0).is_some()
     }
 
     fn is_four(&self) -> bool {
@@ -180,15 +209,25 @@ impl Hand {
         false
     }
 
-    fn compare(&self, other: &Self) -> Ordering {
-        for (lhs, rhs) in self.cards.iter().zip(other.cards) {
-            if lhs > &rhs {
-                return Ordering::Greater;
-            } else if lhs < &rhs {
-                return Ordering::Less;
+    fn is_n(&self, n: usize, start: usize) -> Option<Card> {
+        // ignore jokers
+        for i in start..(6 - n) {
+            if self.cards[i] == Card::J && self.p2 {
+                continue;
+            }
+            let count = self
+                .cards
+                .iter()
+                .skip(i + 1)
+                .filter(|c| **c == self.cards[i])
+                .count();
+            //println!("{count}");
+            if count == n - 1 {
+                // subtract one since the card is not compared to itself
+                return Some(self.cards[i]);
             }
         }
-        Ordering::Equal
+        None
     }
 
     fn score(&self) -> usize {
@@ -209,21 +248,40 @@ impl Hand {
         }
     }
 
-    fn is_n(&self, n: usize, start: usize) -> Option<Card> {
-        for i in start..(6 - n) {
-            let count = self
-                .cards
-                .iter()
-                .skip(i + 1)
-                .filter(|c| **c == self.cards[i])
-                .count();
-            //println!("{count}");
-            if count == n - 1 {
-                // subtract one since the card is not compared to itself
-                return Some(self.cards[i]);
+    fn upgrade(&self, score: usize) -> usize {
+        match score {
+            6 => unreachable!(), // five of a kind can't be upgraded
+            5 => 6,              // four gets upgraded to five
+            4 => unreachable!(), // full house can't be upgraded
+            3 => 5,              // three gets upgraded to four
+            2 => 4,              // double pair gets upgraded to full house
+            1 => 3,              // pair gets upgraded to three
+            0 => 1,              // high card gets upgraded to pair
+            _ => unreachable!(),
+        }
+    }
+
+    // joker will upgrade to the next best:
+    // four -> five
+    // three -> four
+    // full house stays
+    // two pair -> full house
+    // pair -> three
+    // high card -> two
+    //
+    // will also depend on joker count
+    // solution: make upgrade function, analyzes each card and then upgrades the rank
+    fn score_joker(&self) -> usize {
+        if self.cards.iter().all(|c| *c == Card::J) {
+            return 6;
+        }
+        let mut score = self.score();
+        for c in self.cards {
+            if c == Card::J {
+                score = self.upgrade(score);
             }
         }
-        None
+        score
     }
 }
 
@@ -298,7 +356,7 @@ fn test_comparison_same_type() {
     let greater: Hand = "KK677".into();
     let lesser: Hand = "KTJJT".into();
     assert!(greater.is_pair() && lesser.is_pair());
-    assert!(greater > lesser);
+    assert!(greater.compare(&lesser) == Ordering::Greater);
 }
 
 #[test]
@@ -316,7 +374,7 @@ fn test_correct_order() {
         .into_iter()
         .map(|(hand, _)| hand)
         .collect();
-    hands.sort();
+    hands.sort_by(|a, b| a.compare(&b));
     for h in &hands {
         println!("{}", h);
     }
@@ -328,4 +386,21 @@ fn test_total_winnings() {
     let result = determine_total_winnings(hands);
     println!("{result}");
     //assert_eq!(result ,6440);
+}
+
+#[test]
+fn test_score_joker_four() {
+    let hand: Hand = "T55J5".into();
+    assert_eq!(hand.score_joker(), 5);
+}
+
+#[test]
+fn test_score_joker_full_house() {
+    let hand: Hand = "2233J".into();
+    assert_eq!(hand.score_joker(), 4);
+}
+
+#[test]
+fn test_solution_p2() {
+    println!("{}", get_solution_1());
 }

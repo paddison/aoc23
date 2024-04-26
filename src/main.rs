@@ -26,4 +26,5 @@ fn main() {
     println!("d06.2: {}", d06::get_solution_2());
 
     println!("d07.1: {}", d07::get_solution_1());
+    println!("d07.2: {}", d07::get_solution_2());
 }

@@ -9,7 +9,6 @@ static INPUT2: (usize, usize) = (41777096, 249136211271011);
 
 fn determine_ways_to_beat((time, record): (usize, usize)) -> Vec<usize> {
     (0..=time)
-        .into_iter()
         .filter(|pushed| (time - pushed) * pushed > record)
         .collect()
 }
