@@ -33,7 +33,8 @@ fn parse_input(input: &'static str) -> (Vec<Turn>, Network) {
         .map(|c| c.into())
         .collect();
     // parse the network, skipping the first line
-    let network = line_iter.skip(1)
+    let network = line_iter
+        .skip(1)
         .map(|s| (&s[..3], (&s[7..10], &s[12..15])))
         .collect();
     (turns, network)
