@@ -66,7 +66,7 @@ impl Index<Position> for Map {
 
 impl Map {
     fn new(start: Position, tiles: Vec<Vec<Tile>>) -> Self {
-        let mut map = Self { tiles }; 
+        let mut map = Self { tiles };
         map.set_start_tile(start, map.determine_start_tile(start));
         map
     }
@@ -76,62 +76,47 @@ impl Map {
             return false;
         }
         match dir {
-            Dir::North => match self[(pos.0, pos.1.overflowing_sub(1).0)] {
-                Tile::SouthWest | Tile::SouthEast | Tile::Vertical => true,
-                _ => false,
-            },
-            Dir::East => match self[(pos.0 + 1, pos.1)] {
-                Tile::SouthWest | Tile::NorthWest | Tile::Horizontal => true,
-                _ => false,
-            },
-            Dir::South => match self[(pos.0, pos.1 + 1)] {
-                Tile::NorthEast | Tile::NorthWest | Tile::Vertical => true,
-                _ => false,
-            },
-            Dir::West => match self[(pos.0.overflowing_sub(1).0, pos.1)] {
-                Tile::NorthEast | Tile::SouthEast | Tile::Horizontal => true,
-                _ => false,
-            },
+            Dir::North => matches!(
+                self[(pos.0, pos.1.overflowing_sub(1).0)],
+                Tile::SouthWest | Tile::SouthEast | Tile::Vertical
+            ),
+            Dir::East => matches!(
+                self[(pos.0 + 1, pos.1)],
+                Tile::SouthWest | Tile::NorthWest | Tile::Horizontal
+            ),
+            Dir::South => matches!(
+                self[(pos.0, pos.1 + 1)],
+                Tile::NorthEast | Tile::NorthWest | Tile::Vertical
+            ),
+            Dir::West => matches!(
+                self[(pos.0.overflowing_sub(1).0, pos.1)],
+                Tile::NorthEast | Tile::SouthEast | Tile::Horizontal
+            ),
         }
     }
 
     fn is_valid_direction(&self, pos: Position, dir: Dir) -> bool {
         let tile = self[pos];
-        if tile == Tile::Start {
-            return true;
-        }
 
         match dir {
-            Dir::North => match tile {
-                Tile::NorthEast | Tile::NorthWest | Tile::Vertical => true,
-                _ => false,
-            },
-            Dir::East => match tile {
-                Tile::NorthEast | Tile::SouthEast | Tile::Horizontal => true,
-                _ => false,
-            },
-            Dir::South => match tile {
-                Tile::SouthEast | Tile::SouthWest | Tile::Vertical => true,
-                _ => false,
-            },
-            Dir::West => match tile {
-                Tile::NorthWest | Tile::SouthWest | Tile::Horizontal => true,
-                _ => false,
-            },
+            Dir::North => matches!(tile, Tile::NorthEast | Tile::NorthWest | Tile::Vertical),
+            Dir::East => matches!(tile, Tile::NorthEast | Tile::SouthEast | Tile::Horizontal),
+            Dir::South => matches!(tile, Tile::SouthEast | Tile::SouthWest | Tile::Vertical),
+            Dir::West => matches!(tile, Tile::NorthWest | Tile::SouthWest | Tile::Horizontal),
         }
     }
 
     fn determine_start_tile(&self, start: Position) -> Tile {
         // check if we can go south, east left or right
         if self.can_move(start, Dir::North) && self.can_move(start, Dir::East) {
-        // all norths
+            // all norths
             Tile::NorthEast
         } else if self.can_move(start, Dir::North) && self.can_move(start, Dir::South) {
             Tile::Vertical
         } else if self.can_move(start, Dir::North) && self.can_move(start, Dir::West) {
             Tile::NorthWest
         } else if self.can_move(start, Dir::East) && self.can_move(start, Dir::South) {
-        // all easts
+            // all easts
             Tile::SouthEast
         } else if self.can_move(start, Dir::East) && self.can_move(start, Dir::West) {
             Tile::Horizontal
@@ -148,17 +133,23 @@ impl Map {
 }
 
 fn parse_input(input: &str) -> (Position, Map) {
-    let tiles: Vec<Vec<_>> = input.lines().map(|line| line.chars().map(|c| c.into()).collect()).collect();
-    let mut position = (0, 0);
-    'outer: for (y, row) in tiles.iter().enumerate() {
-        for (x, tile) in row.iter().enumerate() {
-            if *tile == Tile::Start {
-                position = (x, y);
-                break 'outer;
-            }
-        }
-    }
-    let map = Map::new(position, tiles); 
+    let tiles: Vec<Vec<_>> = input
+        .lines()
+        .map(|line| line.chars().map(|c| c.into()).collect())
+        .collect();
+    let position = tiles
+        .iter()
+        .enumerate()
+        .find_map(|(y, row)| {
+            row.iter()
+                .enumerate()
+                .find_map(|(x, tile)| match *tile == Tile::Start {
+                    true => Some((x, y)),
+                    false => None,
+                })
+        })
+        .unwrap();
+    let map = Map::new(position, tiles);
     (position, map)
 }
 
@@ -176,7 +167,7 @@ fn traverse(start: Position, map: &Map) -> HashSet<Position> {
     let mut prev = (usize::MAX, usize::MAX);
     let dirs = [Dir::North, Dir::East, Dir::South, Dir::West];
     let mut pipe = HashSet::from([start]);
-    
+
     loop {
         for dir in dirs {
             if map.can_move(cur, dir) {
@@ -199,7 +190,7 @@ fn traverse(start: Position, map: &Map) -> HashSet<Position> {
 // check for parity in tiles:
 // passing a '|' means if we're outside the loop, then we will be inside afterwards and
 // vice versa (it flips)
-// similarly the combination 'F'...'J' and 'L' .. '7' cause a flip, 
+// similarly the combination 'F'...'J' and 'L' .. '7' cause a flip,
 // (think of these as vertical pipes which are stretched in the horizontal axis.
 // writing out all the combinations, it suffices to flip on encountering 'J', 'L' or '|'
 // tiles (or 'F', '7' and '|')
@@ -214,7 +205,7 @@ fn count_inside_tiles(map: &Map, pipe: HashSet<Position>) -> usize {
             if pipe.contains(&(x, y)) && flip_tiles.contains(tile) {
                 is_outside = !is_outside;
             } else if !pipe.contains(&(x, y)) && !is_outside {
-                inside_tiles += 1; 
+                inside_tiles += 1;
             }
         }
     }
@@ -234,7 +225,6 @@ pub fn get_solution_2() -> usize {
 
     count_inside_tiles(&map, pipe)
 }
-
 
 #[test]
 fn test_parse_input() {
