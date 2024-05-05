@@ -8,6 +8,7 @@ mod d07;
 mod d08;
 mod d09;
 mod d10;
+mod d11;
 
 fn main() {
     println!("d01.1: {}", d01::get_solution_1());
@@ -39,4 +40,7 @@ fn main() {
 
     println!("d10.1: {}", d10::get_solution_1());
     println!("d10.2: {}", d10::get_solution_2());
+
+    println!("d11.1: {}", d11::get_solution_1());
+    println!("d11.2: {}", d11::get_solution_2());
 }
