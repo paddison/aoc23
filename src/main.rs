@@ -1,3 +1,5 @@
+use std::time::Instant;
+
 mod d01;
 mod d02;
 mod d03;
@@ -9,6 +11,7 @@ mod d08;
 mod d09;
 mod d10;
 mod d11;
+mod d12;
 
 fn main() {
     println!("d01.1: {}", d01::get_solution_1());
@@ -43,4 +46,9 @@ fn main() {
 
     println!("d11.1: {}", d11::get_solution_1());
     println!("d11.2: {}", d11::get_solution_2());
+
+    let mut now = Instant::now();
+    println!("d12.1: {}\t {}us", d12::get_solution_1(), now.elapsed().as_micros());
+    now = Instant::now();
+    println!("d12.2: {}\t {}us", d12::get_solution_2(), now.elapsed().as_micros());
 }

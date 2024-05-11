@@ -16,7 +16,11 @@ struct Universe {
 
 impl Universe {
     fn expand(self, rate: usize) -> ExpandedUniverse {
-        let Self { galaxies, width, height } = self;
+        let Self {
+            galaxies,
+            width,
+            height,
+        } = self;
         let mut expanded = galaxies.clone();
 
         for (axis, len) in [(COL, width), (ROW, height)] {
@@ -31,7 +35,6 @@ impl Universe {
 
         ExpandedUniverse { galaxies: expanded }
     }
-
 }
 
 struct ExpandedUniverse {
@@ -77,5 +80,9 @@ pub fn get_solution_1() -> usize {
 }
 
 pub fn get_solution_2() -> usize {
-    parse_input(INPUT).expand(999999).shortest_dists().iter().sum()
+    parse_input(INPUT)
+        .expand(999999)
+        .shortest_dists()
+        .iter()
+        .sum()
 }
