@@ -54,10 +54,11 @@ impl Entry {
         }
 
         // check if this was a valid arangement
-        if j == self.damaged.len() && 
-            (i >= self.springs.len() || self.springs[i..].iter().all(|s| *s != Spring::D)) {
+        if j == self.damaged.len()
+            && (i >= self.springs.len() || self.springs[i..].iter().all(|s| *s != Spring::D))
+        {
             return 1;
-        }         
+        }
 
         // get the current group
         let n = match self.damaged.get(j) {

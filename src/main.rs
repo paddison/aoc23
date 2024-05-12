@@ -12,9 +12,15 @@ mod d09;
 mod d10;
 mod d11;
 mod d12;
+mod d13;
 
 fn main() {
-    println!("d01.1: {}", d01::get_solution_1());
+    let mut now = Instant::now();
+    println!(
+        "d01.1: {}\t{}us",
+        d01::get_solution_1(),
+        now.elapsed().as_micros()
+    );
     println!("d01.2: {}", d01::get_solution_2());
 
     println!("d02.1: {}", d02::get_solution_1());
@@ -47,8 +53,27 @@ fn main() {
     println!("d11.1: {}", d11::get_solution_1());
     println!("d11.2: {}", d11::get_solution_2());
 
-    let mut now = Instant::now();
-    println!("d12.1: {}\t {}us", d12::get_solution_1(), now.elapsed().as_micros());
     now = Instant::now();
-    println!("d12.2: {}\t {}us", d12::get_solution_2(), now.elapsed().as_micros());
+    println!(
+        "d12.1: {:16}\t{}us",
+        d12::get_solution_1(),
+        now.elapsed().as_micros()
+    );
+    now = Instant::now();
+    println!(
+        "d12.2: {:16}\t{}us",
+        d12::get_solution_2(),
+        now.elapsed().as_micros()
+    );
+    
+    aoc_result!(13, 1, d13::get_solution_1());
+    aoc_result!(13, 2, d13::get_solution_2());
+}
+
+#[macro_export]
+macro_rules! aoc_result {
+    ( $d:literal, $p:literal, $r:expr ) => {
+        let now = Instant::now();
+        println!("d{}.{}: {:16}\t{}us", $d, $p, $r, now.elapsed().as_micros());
+    }
 }
