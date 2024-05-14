@@ -24,4 +24,3 @@ impl<T: Clone + Copy> Rotate for Vec<Vec<T>> {
         rotated
     }
 }
-

@@ -8,17 +8,20 @@ static INPUT: &str = include_str!("../data/d14");
 
 const N_CYCLES: usize = 1000000000;
 
-
 fn parse_input(input: &str) -> Vec<Vec<char>> {
-    input.lines().map(|l| l.chars().collect()).collect() 
+    input.lines().map(|l| l.chars().collect()).collect()
 }
 
 fn tilt_up(mut grid: Vec<Vec<char>>) -> Vec<Vec<char>> {
-    let mut new_grid = vec![grid.remove(0)]; 
+    let mut new_grid = vec![grid.remove(0)];
 
     for line in grid.into_iter() {
         // push an empty grid with no rocks
-        new_grid.push(line.iter().map(|c| if *c == 'O' { '.' } else { *c }).collect());
+        new_grid.push(
+            line.iter()
+                .map(|c| if *c == 'O' { '.' } else { *c })
+                .collect(),
+        );
         for (j, c) in line.iter().copied().enumerate() {
             if c != 'O' {
                 continue;
@@ -28,7 +31,7 @@ fn tilt_up(mut grid: Vec<Vec<char>>) -> Vec<Vec<char>> {
                     new_grid[k + 1][j] = 'O';
                     break;
                 } else if k == 0 {
-                    new_grid[k][j] = 'O'; 
+                    new_grid[k][j] = 'O';
                 }
             }
         }
@@ -48,8 +51,7 @@ fn do_cycle(mut grid: Vec<Vec<char>>) -> Vec<Vec<char>> {
 }
 
 fn get_total_load(grid: &[Vec<char>]) -> usize {
-    grid
-        .iter()
+    grid.iter()
         .rev()
         .enumerate()
         .map(|(i, l)| l.iter().filter(|c| **c == 'O').count() * (i + 1))
@@ -62,7 +64,7 @@ fn find_repetition(mut grid: Vec<Vec<char>>) -> usize {
     seen.insert(grid.clone(), 0);
 
     for i in 1.. {
-        grid = do_cycle(grid); 
+        grid = do_cycle(grid);
         // try to find a cycle in the patterns
         if let Some(start) = seen.get(&grid) {
             // cycle was found, see how many more grid cycles are needed to end up
@@ -87,7 +89,6 @@ pub fn get_solution_2() -> usize {
     find_repetition(parse_input(INPUT))
 }
 
-
 #[test]
 fn test_tilt_up() {
     let grid = parse_input(TEST);
@@ -106,7 +107,7 @@ fn test_get_total_load() {
 
 #[test]
 fn test_do_cycle() {
-    let grid =parse_input(TEST);
+    let grid = parse_input(TEST);
     let new_grid = do_cycle(grid);
 
     for line in new_grid {
