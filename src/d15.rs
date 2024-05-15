@@ -11,8 +11,9 @@ struct AocHashMap<T: Lens, const C: usize = CAP> {
     buckets: [Vec<T>; C],
 }
 
-impl<T: Lens, const C: usize> AocHashMap<T, C> 
-where for <'a> <T as Lens>::Item<'a>: PartialEq
+impl<T: Lens, const C: usize> AocHashMap<T, C>
+where
+    for<'a> <T as Lens>::Item<'a>: PartialEq,
 {
     fn remove(&mut self, lens: T) -> Option<T> {
         let bucket_index = lens.hash();
@@ -47,19 +48,18 @@ where for <'a> <T as Lens>::Item<'a>: PartialEq
             .iter()
             .enumerate()
             .flat_map(|(i, bucket)| {
-                bucket
-                    .iter()
-                    .enumerate()
-                    .filter_map(move |(j, lens)| {
-                        lens.focusing_power().map(|fp| fp * (i + 1) * (j + 1)).ok()
-                    })
+                bucket.iter().enumerate().filter_map(move |(j, lens)| {
+                    lens.focusing_power().map(|fp| fp * (i + 1) * (j + 1)).ok()
+                })
             })
             .sum::<usize>()
     }
 }
 
 trait Lens {
-    type Item<'a> where Self: 'a;
+    type Item<'a>
+    where
+        Self: 'a;
 
     fn label(&self) -> Self::Item<'_>;
     fn op(&self) -> Self::Item<'_>;
@@ -88,7 +88,7 @@ impl Lens for &str {
     fn hash(&self) -> usize {
         self.label().hash_p1()
     }
-    
+
     fn hash_p1(&self) -> usize {
         self.bytes()
             .fold(0, |acc, b| ((acc + b as usize) * 17) % 256)
@@ -113,7 +113,7 @@ pub fn get_solution_1() -> usize {
 
 pub fn get_solution_2() -> usize {
     let mut map = AocHashMap::<&str, CAP> {
-        buckets: [EMPTY; CAP]
+        buckets: [EMPTY; CAP],
     };
     for lens in parse_input(INPUT) {
         match lens.op() {
