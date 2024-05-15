@@ -46,7 +46,7 @@ fn does_reflect_vertically(pattern: &Pattern, i: usize) -> usize {
 }
 
 fn find_reflection(pattern: &Pattern, diff: usize) -> Reflection {
-    let width = pattern.get(0).map(|row| row.len()).unwrap_or(0);
+    let width = pattern.first().map(|row| row.len()).unwrap_or(0);
     let height = pattern.len();
 
     for i in 1..height {

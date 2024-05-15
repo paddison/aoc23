@@ -111,7 +111,7 @@ fn bfs(map: &[Vec<char>], start: (usize, usize), dir: Dir) -> HashSet<(usize, us
 }
 
 fn bfs_all_positions(map: &[Vec<char>]) -> HashSet<(usize, usize)> {
-    let width = map.get(0).map(|row| row.len()).unwrap_or(0);
+    let width = map.first().map(|row| row.len()).unwrap_or(0);
     let height = map.len();
 
     (0..width)
@@ -119,7 +119,7 @@ fn bfs_all_positions(map: &[Vec<char>]) -> HashSet<(usize, usize)> {
         .chain((0..width).map(|x| ((x, height - 1), Dir::Up)))
         .chain((0..height).map(|y| ((0, y), Dir::Right)))
         .chain((0..height).map(|y| ((width - 1, y), Dir::Left)))
-        .map(|(pos, dir)| bfs(&map, pos, dir))
+        .map(|(pos, dir)| bfs(map, pos, dir))
         .max_by(|a, b| a.len().cmp(&b.len()))
         .unwrap_or(HashSet::new())
 }

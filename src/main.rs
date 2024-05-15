@@ -19,32 +19,32 @@ mod d16;
 mod util;
 
 fn main() {
-    aoc_result!(01, 1, d01::get_solution_1());
-    aoc_result!(01, 2, d01::get_solution_2());
+    aoc_result!(1, 1, d01::get_solution_1());
+    aoc_result!(1, 2, d01::get_solution_2());
 
-    aoc_result!(02, 1, d02::get_solution_1());
-    aoc_result!(02, 2, d02::get_solution_2());
+    aoc_result!(2, 1, d02::get_solution_1());
+    aoc_result!(2, 2, d02::get_solution_2());
 
-    aoc_result!(03, 1, d03::get_solution_1());
-    aoc_result!(03, 2, d03::get_solution_2());
+    aoc_result!(3, 1, d03::get_solution_1());
+    aoc_result!(3, 2, d03::get_solution_2());
 
-    aoc_result!(04, 1, d04::get_solution_1());
-    aoc_result!(04, 2, d04::get_solution_2());
+    aoc_result!(4, 1, d04::get_solution_1());
+    aoc_result!(4, 2, d04::get_solution_2());
 
-    aoc_result!(05, 1, d05::get_solution_1());
-    aoc_result!(05, 2, d05::get_solution_2());
+    aoc_result!(5, 1, d05::get_solution_1());
+    aoc_result!(5, 2, d05::get_solution_2());
 
-    aoc_result!(06, 1, d06::get_solution_1());
-    aoc_result!(06, 2, d06::get_solution_2());
+    aoc_result!(6, 1, d06::get_solution_1());
+    aoc_result!(6, 2, d06::get_solution_2());
 
-    aoc_result!(07, 1, d07::get_solution_1());
-    aoc_result!(07, 2, d07::get_solution_2());
+    aoc_result!(7, 1, d07::get_solution_1());
+    aoc_result!(7, 2, d07::get_solution_2());
 
-    aoc_result!(08, 1, d08::get_solution_1());
-    aoc_result!(08, 2, d08::get_solution_2());
+    aoc_result!(8, 1, d08::get_solution_1());
+    aoc_result!(8, 2, d08::get_solution_2());
 
-    aoc_result!(09, 1, d09::get_solution_1());
-    aoc_result!(09, 2, d09::get_solution_2());
+    aoc_result!(9, 1, d09::get_solution_1());
+    aoc_result!(9, 2, d09::get_solution_2());
 
     aoc_result!(10, 1, d10::get_solution_1());
     aoc_result!(10, 2, d10::get_solution_2());

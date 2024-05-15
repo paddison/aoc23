@@ -8,7 +8,7 @@ pub trait Rotate {
 
 impl<T: Clone + Copy> Rotate for Vec<Vec<T>> {
     fn rotate(&self) -> Self {
-        let width = self.get(0).map(|l| l.len()).unwrap_or(0);
+        let width = self.first().map(|l| l.len()).unwrap_or(0);
         assert!(self.iter().all(|l| l.len() == width));
         let height = self.len();
         let mut rotated = Vec::new();

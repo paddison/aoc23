@@ -73,11 +73,11 @@ impl Lens for &str {
     type Item<'a> = &'a str where Self: 'a;
 
     fn label(&self) -> Self::Item<'_> {
-        &self[..self.find(&['-', '=']).unwrap()]
+        &self[..self.find(['-', '=']).unwrap()]
     }
 
     fn op(&self) -> Self::Item<'_> {
-        let idx = self.find(&['-', '=']).unwrap();
+        let idx = self.find(['-', '=']).unwrap();
         &(*self)[idx..idx + 1]
     }
 
@@ -95,7 +95,7 @@ impl Lens for &str {
     }
 
     fn focusing_power(&self) -> Result<usize, ParseIntError> {
-        let idx = self.find(&['-', '=']).unwrap();
+        let idx = self.find(['-', '=']).unwrap();
         str::parse::<usize>(&self[idx + 1..])
     }
 }
