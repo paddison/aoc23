@@ -2,7 +2,6 @@
 static TEST: &str = include_str!("../data/d18t");
 static INPUT: &str = include_str!("../data/d18");
 
-
 #[derive(Debug, Clone, Copy, Eq, PartialEq, Hash)]
 enum Dir {
     Up,
@@ -28,7 +27,10 @@ impl TryFrom<&str> for Dir {
 fn parse_hex(hex: &str) -> (isize, Dir) {
     assert!(&hex[0..1] == "#");
 
-    (isize::from_str_radix(&hex[1..6], 16).unwrap(), Dir::try_from(&hex[6..7]).unwrap())
+    (
+        isize::from_str_radix(&hex[1..6], 16).unwrap(),
+        Dir::try_from(&hex[6..7]).unwrap(),
+    )
 }
 
 struct DigEntry {
@@ -42,10 +44,17 @@ impl TryFrom<&'static str> for DigEntry {
     fn try_from(inp: &'static str) -> Result<Self, Self::Error> {
         let mut iter = inp.split_whitespace();
         let dir = iter.next().ok_or("empty line")?.try_into()?;
-        let steps = iter.next().ok_or("steps missing")?.parse::<usize>().map_err(|_| "cannot parse steps")?;
-        let color = iter.next().ok_or("color missing").map(|c| &c[1..c.len() - 1])?;
+        let steps = iter
+            .next()
+            .ok_or("steps missing")?
+            .parse::<usize>()
+            .map_err(|_| "cannot parse steps")?;
+        let color = iter
+            .next()
+            .ok_or("color missing")
+            .map(|c| &c[1..c.len() - 1])?;
 
-        Ok(DigEntry{dir, steps, color})
+        Ok(DigEntry { dir, steps, color })
     }
 }
 
@@ -55,7 +64,7 @@ fn parse_input(inp: &'static str) -> Result<Vec<DigEntry>, &'static str> {
 
 fn picks_theorem(map: &[(isize, Dir)]) -> isize {
     let mut area: isize = 0;
-    let mut x = 0; 
+    let mut x = 0;
     let mut y = 0;
     let mut y_1 = y;
     let mut x_1 = x;
@@ -65,12 +74,12 @@ fn picks_theorem(map: &[(isize, Dir)]) -> isize {
         match dir {
             Dir::Up => y_1 -= d,
             Dir::Down => y_1 += d,
-            Dir::Right => { 
+            Dir::Right => {
                 x_1 += d;
-            },
+            }
             Dir::Left => {
                 x_1 -= d;
-            },
+            }
         }
         perimeter += d;
 
@@ -79,7 +88,6 @@ fn picks_theorem(map: &[(isize, Dir)]) -> isize {
         y = y_1;
         x = x_1;
     }
-
 
     area / 2 + perimeter / 2 + 1
 }
@@ -90,7 +98,7 @@ pub fn get_solution_1() -> usize {
         .into_iter()
         .map(|DigEntry { steps, dir, .. }| (steps as isize, dir))
         .collect::<Vec<(isize, Dir)>>();
-    
+
     picks_theorem(&inp) as usize
 }
 
@@ -100,7 +108,6 @@ pub fn get_solution_2() -> usize {
         .into_iter()
         .map(|DigEntry { color, .. }| parse_hex(color))
         .collect::<Vec<(isize, Dir)>>();
-
 
     picks_theorem(&inp) as usize
 }

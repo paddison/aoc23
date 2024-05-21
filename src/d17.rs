@@ -1,5 +1,7 @@
 use std::{
-    cmp::{Ordering, Reverse}, collections::{BinaryHeap, HashSet}, hash::Hash
+    cmp::{Ordering, Reverse},
+    collections::{BinaryHeap, HashSet},
+    hash::Hash,
 };
 
 #[allow(dead_code)]
@@ -114,9 +116,10 @@ impl Hash for Node {
         self.steps.hash(state);
     }
 }
-    
-fn dijkstra<F>(map: &[Vec<u8>], can_move: F, min_steps: usize) -> usize 
-    where F: Fn(&Node, Dir) -> Option<usize>
+
+fn dijkstra<F>(map: &[Vec<u8>], can_move: F, min_steps: usize) -> usize
+where
+    F: Fn(&Node, Dir) -> Option<usize>,
 {
     assert!(map.len() > 0);
     // starting positions and goal
