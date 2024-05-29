@@ -99,7 +99,7 @@ impl PartialEq for Node {
 
 impl PartialOrd for Node {
     fn partial_cmp(&self, other: &Self) -> Option<Ordering> {
-        self.cost.partial_cmp(&other.cost)
+        Some(self.cmp(other))
     }
 }
 
@@ -121,7 +121,7 @@ fn dijkstra<F>(map: &[Vec<u8>], can_move: F, min_steps: usize) -> usize
 where
     F: Fn(&Node, Dir) -> Option<usize>,
 {
-    assert!(map.len() > 0);
+    assert!(!map.is_empty());
     // starting positions and goal
     let down = Node::new(0, (0, 0), Dir::Down, 0);
     let right = Node::new(0, (0, 0), Dir::Right, 0);

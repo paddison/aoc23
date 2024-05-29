@@ -1,8 +1,15 @@
-use std::{collections::HashMap, fmt::Display, num::ParseIntError};
+use std::{
+    collections::HashMap,
+    fmt::Display,
+    num::ParseIntError,
+    ops::{Index, IndexMut},
+};
 
 #[allow(dead_code)]
 static TEST: &str = include_str!("../data/d19t");
 static INPUT: &str = include_str!("../data/d19");
+
+type Workflows = HashMap<String, Vec<Rule>>;
 
 #[derive(Debug)]
 enum InputError {
@@ -36,7 +43,7 @@ impl Display for InputError {
             InputError::Category(msg) => format!("Category - {}", msg),
             InputError::Comparison(msg) => format!("Comparison - {}", msg),
             InputError::Params(msg) => format!("Params - {}", msg),
-            InputError::Numerical(err) => format!("Numerical - {}", err.to_string()),
+            InputError::Numerical(err) => format!("Numerical - {}", err),
             InputError::_Rule(msg) => format!("Rule - {}", msg),
             InputError::Workflow(msg) => format!("Workflow - {}", msg),
             InputError::Part(msg) => format!("Part - {}", msg),
@@ -100,7 +107,7 @@ impl TryFrom<&str> for Workflow {
         let name = value[..rule_start].to_string();
         let rules: Vec<Rule> = value[rule_start + 1..rule_end]
             .split(',')
-            .map(|rule| Rule::try_from(rule))
+            .map(Rule::try_from)
             .collect::<Result<Vec<Rule>, Self::Error>>()?;
 
         Ok(Self(name, rules))
@@ -161,7 +168,7 @@ impl TryFrom<&str> for Params {
         }
         let category = value[0..1].try_into()?;
         let cmp = value[1..2].try_into()?;
-        let val = usize::from_str_radix(&value[2..colon], 10)?;
+        let val = value[2..colon].parse::<usize>()?;
         let dest = value[colon + 1..].into();
 
         Ok(Self {
@@ -175,13 +182,13 @@ impl TryFrom<&str> for Params {
 
 impl PartialEq<Part> for Params {
     fn eq(&self, other: &Part) -> bool {
-        self.val == other.extract_value(self.category)
+        self.val == other[self.category]
     }
 }
 
 impl PartialOrd<Part> for Params {
     fn partial_cmp(&self, other: &Part) -> Option<std::cmp::Ordering> {
-        self.val.partial_cmp(&other.extract_value(self.category))
+        self.val.partial_cmp(&other[self.category])
     }
 }
 
@@ -203,7 +210,7 @@ impl TryFrom<&str> for Part {
 
         let values = value[1..value.len() - 1]
             .split(',')
-            .map(|s| usize::from_str_radix(&s[2..], 10))
+            .map(|s| s[2..].parse::<usize>())
             .collect::<Result<Vec<_>, _>>()?;
 
         if let [x, m, a, s] = values[..] {
@@ -214,16 +221,21 @@ impl TryFrom<&str> for Part {
     }
 }
 
-impl Part {
-    fn extract_value(&self, category: Category) -> usize {
-        match category {
-            Category::X => self.x,
-            Category::M => self.m,
-            Category::A => self.a,
-            Category::S => self.s,
-        }
-    }
+impl Index<Category> for Part {
+    type Output = usize;
 
+    fn index(&self, idx: Category) -> &Self::Output {
+        match idx {
+            Category::X => &self.x,
+            Category::M => &self.m,
+            Category::A => &self.a,
+            Category::S => &self.s,
+        }
+        
+    }
+}
+
+impl Part {
     fn apply_rules<'a>(&self, rules: &'a [Rule]) -> &'a Destination {
         for rule in rules {
             match rule {
@@ -258,7 +270,127 @@ impl Part {
     }
 }
 
-fn parse_input(inp: &str) -> Result<(HashMap<String, Vec<Rule>>, Vec<Part>), InputError> {
+#[derive(Debug, Clone, Copy)]
+struct PartRange {
+    x: (usize, usize),
+    m: (usize, usize),
+    a: (usize, usize),
+    s: (usize, usize),
+}
+
+impl Index<Category> for PartRange {
+    type Output = (usize, usize);
+
+    fn index(&self, idx: Category) -> &Self::Output {
+        match idx {
+            Category::X => &self.x,
+            Category::M => &self.m,
+            Category::A => &self.a,
+            Category::S => &self.s,
+        }
+    }
+}
+
+impl IndexMut<Category> for PartRange {
+    fn index_mut(&mut self, idx: Category) -> &mut Self::Output {
+        match idx {
+            Category::X => &mut self.x,
+            Category::M => &mut self.m,
+            Category::A => &mut self.a,
+            Category::S => &mut self.s,
+        }
+
+    }
+}
+
+impl PartRange {
+    fn split(mut self, rules: &[Rule]) -> Vec<(PartRange, &Destination)> {
+        let mut splits = Vec::new();
+
+        for rule in rules {
+            match rule {
+                Rule::Dest(dest) => splits.push((self, dest)),
+                Rule::Eval(params) => {
+                    // see if we need to split, otherwise go to next
+                    // three possibilities:
+                    // 1. fully contained (1-x) < x + 1 || (x-4000) > x - 1, this does never seem
+                    //    to happen
+                    // 2. split: (1-y) < x && x < y
+                    // 3. not contained (y-x) < y || (y-x) > x
+                    if !self.contains(params.val, params.category) {
+                        continue;
+                    }
+                    // split
+                    let [inside, outside] = self.split_at_category(params);
+                    self = outside;
+                    splits.push((inside, &params.dest));
+                }
+            }
+        }
+
+        splits
+    }
+
+    fn split_at_category(mut self, params: &Params) -> [PartRange; 2] {
+        let mut other = self;
+        // make sure split starts at right index
+        let split = match params.cmp {
+            Comparison::Greater => params.val + 1,
+            Comparison::Less => params.val,
+        };
+        let range = self[params.category];
+
+        other[params.category] = (split, range.1);
+        self[params.category] = (range.0, split);
+        
+        match params.cmp {
+            Comparison::Greater => [other, self],
+            Comparison::Less => [self, other],
+        }
+    }
+
+    fn contains(&self, split_idx: usize, category: Category) -> bool {
+        match category {
+            Category::X => self.x.0 <= split_idx && split_idx < self.x.1,
+            Category::M => self.m.0 <= split_idx && split_idx < self.m.1,
+            Category::A => self.a.0 <= split_idx && split_idx < self.a.1,
+            Category::S => self.s.0 <= split_idx && split_idx < self.s.1,
+        }
+    }
+
+    fn combinations(&self) -> usize {
+        (self.x.1 - self.x.0)
+            * (self.m.1 - self.m.0)
+            * (self.a.1 - self.a.0)
+            * (self.s.1 - self.s.0)
+    }
+}
+
+fn filter(workflows: Workflows) -> Vec<PartRange> {
+    let start = PartRange {
+        x: (1, 4001),
+        m: (1, 4001),
+        a: (1, 4001),
+        s: (1, 4001),
+    };
+    let dest = Destination::Other("in".to_string());
+    let mut queue = Vec::from([(start, &dest)]);
+    let mut accepted = Vec::new();
+
+    while let Some((range, dest)) = queue.pop() {
+        match dest {
+            Destination::Accepted => accepted.push(range),
+            Destination::Rejected => (),
+            Destination::Other(name) => {
+                queue.append(&mut range.split(workflows.get(name).unwrap()))
+            }
+        }
+    }
+
+    accepted
+}
+
+fn parse_input(inp: &str) -> Result<(Workflows, Vec<Part>), InputError> {
     let mut iter = inp.lines();
 
     let workflows = iter
@@ -267,9 +399,7 @@ fn parse_input(inp: &str) -> Result<(HashMap<String, Vec<Rule>>, Vec<Part>), Inp
         .map(|l| Workflow::try_from(l).map(|Workflow(name, rules)| (name, rules)))
         .collect::<Result<HashMap<String, Vec<Rule>>, InputError>>()?;
 
-    let parts = iter
-        .map(|l| Part::try_from(l))
-        .collect::<Result<Vec<_>, _>>()?;
+    let parts = iter.map(Part::try_from).collect::<Result<Vec<_>, _>>()?;
 
     Ok((workflows, parts))
 }
@@ -286,4 +416,14 @@ pub fn get_solution_1() -> usize {
             0
         }
     }
+}
+
+pub fn get_solution_2() -> usize {
+    parse_input(INPUT).map_or_else(
+        |e| {
+            println!("{e}");
+            0
+        },
+        |(wf, _)| filter(wf).into_iter().map(|r| r.combinations()).sum(),
+    )
 }
