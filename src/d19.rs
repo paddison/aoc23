@@ -231,7 +231,6 @@ impl Index<Category> for Part {
             Category::A => &self.a,
             Category::S => &self.s,
         }
-        
     }
 }
 
@@ -299,7 +298,6 @@ impl IndexMut<Category> for PartRange {
             Category::A => &mut self.a,
             Category::S => &mut self.s,
         }
-
     }
 }
 
@@ -342,7 +340,7 @@ impl PartRange {
 
         other[params.category] = (split, range.1);
         self[params.category] = (range.0, split);
-        
+
         match params.cmp {
             Comparison::Greater => [other, self],
             Comparison::Less => [self, other],
