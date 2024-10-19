@@ -80,6 +80,12 @@ fn main() {
 
     aoc_result!(19, 1, d19::get_solution_1());
     aoc_result!(19, 2, d19::get_solution_2());
+
+    //aoc_result!(20, 1, d20::get_solution_1());
+    //aoc_result!(21, 2, d19::get_solution_2());
+
+    aoc_result!(21, 1, d21::get_solution_1());
+    aoc_result!(21, 2, d21::get_solution_2());
 }
 
 #[macro_export]

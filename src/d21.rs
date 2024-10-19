@@ -1,11 +1,12 @@
-use std::collections::HashSet;
+use std::collections::{HashMap, HashSet, VecDeque};
 use std::fmt::Display;
 use std::ops::Index;
 
+#[allow(unused)]
 static TEST: &str = include_str!("../data/d21t");
 static INPUT: &str = include_str!("../data/d21");
 
-#[derive(Debug, Clone, Copy)]
+#[derive(Debug, Clone, Copy, PartialEq)]
 enum Tile {
     Garden,
     Rock,
@@ -71,27 +72,6 @@ impl Map {
         }
         self.tiles.get(x + (y * self.width))
     }
-
-    fn get_next_positions_wrapping(&self, (x, y): (isize, isize)) -> HashSet<(isize, isize)> {
-        [
-            (x + 1, y),
-            (x - 1, y),
-            (x, y + 1),
-            (x, y - 1),
-        ]
-        .into_iter()
-        .filter_map(|pos| match self.get_tile_wrapping(pos) {
-            Tile::Garden => Some(pos),
-            Tile::Rock => None,
-        }) 
-        .collect()
-    }
-
-    fn get_tile_wrapping(&self, (x, y): (isize, isize)) -> &Tile {
-        let wrapped_x = ((x % self.width as isize) + self.width as isize) % self.width as isize;
-        let wrapped_y = ((y % self.height as isize) + self.height as isize) % self.height as isize;
-        self.tiles.get(wrapped_x as usize + (wrapped_y as usize * self.width)).unwrap()
-    }
 }
 
 impl Index<(usize, usize)> for Map {
@@ -136,15 +116,78 @@ fn parse_input(input: &str) -> ((usize, usize), Map) {
 }
 
 fn calculate_reachable_number_of_tiles(start: (usize, usize), map: Map, n_steps: usize) -> usize {
-    let mut reachable = HashSet::from([start]);
+    let mut even = HashSet::from([start]);
+    let mut odd = HashSet::from([]);
 
-    for _ in 0..n_steps {
-        reachable = reachable.into_iter().fold(HashSet::new(), |acc, pos| {
-            map.get_next_positions(pos).union(&acc).copied().collect()
-        });
+    for i in 0..n_steps {
+        let (cur, next) = if i % 2 == 0 {
+            (&even, &mut odd)
+        } else {
+            (&odd, &mut even)
+        };
+        for pos in cur {
+            for pos in map.get_next_positions(*pos) {
+                next.insert(pos);
+            }
+        }
     }
 
-    reachable.len()
+    if n_steps % 2 == 0 {
+        even.len()
+    } else {
+        odd.len()
+    }
+}
+
+fn get_shortest_paths_per_tile(start: (usize, usize), map: Map) -> HashMap<(usize, usize), usize> {
+    let mut queue = VecDeque::from([(start, 0)]);
+    let mut seen = HashMap::new();
+
+    while let Some((pos, dist)) = queue.pop_front() {
+        if seen.contains_key(&pos) {
+            continue;
+        }
+        seen.insert(pos, dist);
+
+        for next_pos in map.get_next_positions(pos) {
+            if !seen.contains_key(&next_pos) {
+                queue.push_back((next_pos, dist + 1));
+            }
+        }
+    }
+
+    seen
+}
+
+/*
+* Taken from https://github.com/villuna/aoc23/wiki/A-Geometric-solution-to-advent-of-code-2023,-day-21
+* which contains a very good explanation on how this works
+*/
+fn calculate_visited_tiles(visited_tiles: HashMap<(usize, usize), usize>, dim: usize) -> usize {
+    let even_corners = visited_tiles
+        .values()
+        .filter(|steps| **steps % 2 == 0 && **steps > 65)
+        .count();
+
+    let odd_corners = visited_tiles
+        .values()
+        .filter(|steps| **steps % 2 == 1 && **steps > 65)
+        .count();
+
+    let even_full = visited_tiles
+        .values()
+        .filter(|steps| **steps % 2 == 0)
+        .count();
+
+    let odd_full = visited_tiles
+        .values()
+        .filter(|steps| **steps % 2 == 1)
+        .count();
+
+    let n_squares = (26501365 - (dim / 2)) / dim;
+
+    (n_squares + 1).pow(2) * odd_full + n_squares.pow(2) * even_full - (n_squares + 1) * odd_corners
+        + n_squares * even_corners
 }
 
 pub fn get_solution_1() -> usize {
@@ -152,26 +195,9 @@ pub fn get_solution_1() -> usize {
     calculate_reachable_number_of_tiles(start, map, 64)
 }
 
-#[test]
-fn test_calculate_reachable_number_of_tiles() {
+pub fn get_solution_2() -> usize {
     let (start, map) = parse_input(INPUT);
-    let actual = calculate_reachable_number_of_tiles(start, map, 64);
-    println!("{actual}");
-}
-
-#[test]
-fn test_calculate_reachable_number_of_tiles_wrapping() {
-    let (start, map) = parse_input(TEST);
-    
-    let mut reachable = HashSet::from([(start.0 as isize, start.1 as isize)]);
-    let mut prev = 0;
-
-    for _ in 0..1000 {
-        reachable = reachable.into_iter().fold(HashSet::new(), |acc, pos| {
-            map.get_next_positions_wrapping((pos.0 as isize, pos.1 as isize)).union(&acc).copied().collect()
-        });
-        println!("len: {}", reachable.len() - prev);
-        prev = reachable.len();
-    }
-    println!("-1 % 5: {}", (((-1) % 5) + 5) % 5);
+    let dim = map.height;
+    let shortest_paths_per_tile = get_shortest_paths_per_tile(start, map);
+    calculate_visited_tiles(shortest_paths_per_tile, dim)
 }
