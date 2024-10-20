@@ -21,6 +21,7 @@ mod d18;
 mod d19;
 mod d20;
 mod d21;
+mod d22;
 mod util;
 
 fn main() {
@@ -86,6 +87,9 @@ fn main() {
 
     aoc_result!(21, 1, d21::get_solution_1());
     aoc_result!(21, 2, d21::get_solution_2());
+
+    aoc_result!(22, 1, d22::get_solution_1());
+    aoc_result!(22, 2, d22::get_solution_2());
 }
 
 #[macro_export]
