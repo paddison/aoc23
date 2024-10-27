@@ -101,8 +101,6 @@ fn parse_input(input: &str) -> ((usize, usize), Map) {
     }
 
     assert_ne!(start, (0, 0));
-    println!("{width}, {height}");
-
     assert_eq!(tiles.len(), width * height);
 
     (
