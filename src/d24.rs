@@ -11,13 +11,13 @@ struct HailStone2D {
     dy: f64,
 }
 
-impl From<HailStone3D> for HailStone2D {
-    fn from(value: HailStone3D) -> Self {
+impl From<HailStoneVec> for HailStone2D {
+    fn from(value: HailStoneVec) -> Self {
         Self {
-            x: value.x,
-            y: value.y,
-            dx: value.dx,
-            dy: value.dy,
+            x: value.p.x1,
+            y: value.p.x2,
+            dx: value.v.x1,
+            dy: value.v.x2,
         }
     }
 }
@@ -37,12 +37,6 @@ impl Display for HailStone2D {
 }
 
 impl HailStone2D {
-    fn normalize_velocity(&mut self) {
-        let dx = self.dx.abs();
-        self.dx /= dx;
-        self.dy /= dx;
-    }
-
     fn intersect(&self, other: &Self) -> Option<(f64, f64)> {
         if self.is_parallel_to(other) {
             return None;
@@ -75,40 +69,119 @@ impl HailStone2D {
 }
 
 #[derive(Debug, Clone, Copy)]
-struct HailStone3D {
-    x: f64,
-    y: f64,
-    z: f64,
-    dx: f64,
-    dy: f64,
-    dz: f64,
+struct Vec3D {
+    x1: f64,
+    x2: f64,
+    x3: f64,
 }
 
-impl From<&[f64]> for HailStone3D {
-    fn from(value: &[f64]) -> Self {
-        assert_eq!(value.len(), 6);
+impl Vec3D {
+    fn new(x1: f64, x2: f64, x3: f64) -> Self {
+        Self { x1, x2, x3 }
+    }
+    fn cross_product(&self, other: &Self) -> Self {
+        let x1 = (self.x2 * other.x3) - (self.x3 * other.x2);
+        let x2 = (self.x3 * other.x1) - (self.x1 * other.x3);
+        let x3 = (self.x1 * other.x2) - (self.x2 * other.x1);
+
+        Self { x1, x2, x3 }
+    }
+
+    fn dot_product(&self, other: &Self) -> f64 {
+        (self.x1 * other.x1) + (self.x2 * other.x2) + (self.x3 * other.x3)
+    }
+}
+
+impl std::ops::Sub for Vec3D {
+    type Output = Self;
+
+    fn sub(self, rhs: Self) -> Self::Output {
         Self {
-            x: value[0],
-            y: value[1],
-            z: value[2],
-            dx: value[3],
-            dy: value[4],
-            dz: value[5],
+            x1: self.x1 - rhs.x1,
+            x2: self.x2 - rhs.x2,
+            x3: self.x3 - rhs.x3,
         }
     }
 }
 
-impl Display for HailStone3D {
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        write!(
-            f,
-            "{}, {}, {} @ {}, {}, {}",
-            self.x, self.y, self.z, self.dx, self.dy, self.dz
-        )
+impl std::ops::Add for Vec3D {
+    type Output = Self;
+
+    fn add(self, rhs: Self) -> Self::Output {
+        Self {
+            x1: self.x1 + rhs.x1,
+            x2: self.x2 + rhs.x2,
+            x3: self.x3 + rhs.x3,
+        }
     }
 }
 
-fn parse_input(inp: &str) -> Vec<HailStone3D> {
+impl std::ops::Mul<f64> for Vec3D {
+    type Output = Self;
+
+    fn mul(self, rhs: f64) -> Self::Output {
+        Self {
+            x1: self.x1 * rhs,
+            x2: self.x2 * rhs,
+            x3: self.x3 * rhs,
+        }
+    }
+}
+
+impl std::ops::Div<f64> for Vec3D {
+    type Output = Self;
+
+    fn div(self, rhs: f64) -> Self::Output {
+        Self {
+            x1: self.x1 / rhs,
+            x2: self.x2 / rhs,
+            x3: self.x3 / rhs,
+        }
+    }
+}
+
+#[derive(Debug, Clone, Copy)]
+struct HailStoneVec {
+    p: Vec3D,
+    v: Vec3D,
+}
+
+impl From<&[f64]> for HailStoneVec {
+    fn from(value: &[f64]) -> Self {
+        assert_eq!(value.len(), 6);
+        Self {
+            p: Vec3D::new(value[0], value[1], value[2]),
+            v: Vec3D::new(value[3], value[4], value[5]),
+        }
+    }
+}
+
+fn solve(s0: HailStoneVec, s1: HailStoneVec, s2: HailStoneVec) -> HailStoneVec {
+    /* this solution is taken from reddit https://www.reddit.com/r/adventofcode/comments/18pnycy/comment/kxqjg33/?utm_source=share&utm_medium=web3x&utm_name=web3xcss&utm_term=1&utm_content=share_button,
+     * i'm not solving 9 linear equations by hand...*/
+
+    /* get position and velocity relative to stone 0 */
+    let p1 = s1.p - s0.p;
+    let v1 = s1.v - s0.v;
+    let p2 = s2.p - s0.p;
+    let v2 = s2.v - s0.v;
+
+    /* the times when the collision happens, relative to stone 0 */
+    let t1 = (-(p1.cross_product(&p2).dot_product(&v2))) / v1.cross_product(&p2).dot_product(&v2);
+    let t2 = (-(p1.cross_product(&p2).dot_product(&v1))) / p1.cross_product(&v2).dot_product(&v1);
+
+    /* caluclate the actual collision points */
+    let c1 = s1.p + (s1.v * t1);
+    let c2 = s2.p + (s2.v * t2);
+
+    /* calculate the stone from this */
+    let v = (c2 - c1) / (t2 - t1);
+    let p = c1 - (v * t1);
+
+    HailStoneVec { p, v }
+}
+
+fn parse_input(inp: &str) -> Vec<HailStoneVec> {
     inp.lines()
         .map(|line| {
             line.split([',', '@'])
@@ -143,11 +216,8 @@ pub(crate) fn get_solution_1() -> usize {
     determine_intersection(hss, 200000000000000., 400000000000000.)
 }
 
-#[test]
-fn test_parse_input() {
-    let hss: Vec<HailStone2D> = parse_input(TEST).into_iter().map(|hs| hs.into()).collect();
-    for mut hs in hss {
-        hs.normalize_velocity();
-        println!("{hs}");
-    }
+pub(crate) fn get_solution_2() -> usize {
+    let hss: Vec<HailStoneVec> = parse_input(INPUT).into_iter().map(|hs| hs.into()).collect();
+    let stone = solve(hss[0], hss[1], hss[2]);
+    (stone.p.x1 + stone.p.x2 + stone.p.x3) as usize
 }

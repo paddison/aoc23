@@ -98,6 +98,7 @@ fn main() {
     aoc_result!(23, 2, d23::get_solution_2());
 
     aoc_result!(24, 1, d24::get_solution_1());
+    aoc_result!(24, 2, d24::get_solution_2());
 
     aoc_result!(25, 1, d25::get_solution_1());
 }
